@@ -104,9 +104,8 @@ public class ServiciosWS {
     @DELETE
     @Path("/borrarUsuario")
     @Consumes("application/json")
-    public void borrarUsuario(@QueryParam("nombreUsuario")String nombreUsuario){
-        DtoUsuario u= usuarios.buscarUsuario(nombreUsuario);
-        usuarios.borrarUsuario(u);
+    public void borrarUsuario(@QueryParam("nombreUsuario")String nombreUsuario){        
+        usuarios.borrarUsuario(nombreUsuario);
         
     }
         
