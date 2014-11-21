@@ -9,11 +9,14 @@ package com.easytasks.services.rest;
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMUsuariosSB;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
+import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityExistsException;
+import javax.persistence.PersistenceException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.PathParam;
@@ -83,21 +86,30 @@ public class ServiciosWS {
     @PUT
     @Path("/agregarUsuario")
     @Consumes("application/json")
-    public void agregarUsuario(DtoUsuario u){
-        usuarios.agregarUsuario(u);
+    public String agregarUsuario(DtoUsuario u){
+        try{ 
+            usuarios.agregarUsuario(u);
+            return "OK";
+        }catch(ExisteEntidadException e){
+            return "Ya existe un usuario con el Nombre de Usuario: " + u.getNombreUsuario() + ". Ingrese un nombre de usuario único";
+        }
+        catch(Exception ee){
+            return "Ocurrió un error inesperado al ingresar el usuario " + u.getNombreUsuario();
+        }
+        
     }
     
-    /*@POST
+    @POST
     @Path("/agregarContacto")
     @Consumes("application/json")
-    public void agregarContacto(@QueryParam("usuario")DtoUsuario usuario, @QueryParam("contacto")DtoUsuario contacto){
+    public void agregarContacto(@QueryParam("usuario")String usuario, @QueryParam("contacto")String contacto){
         usuarios.agregarContacto(usuario, contacto);
-    }*/
+    }
     
     @POST
     @Path("/modificarUsuario")
     @Consumes("application/json")
-    public void modificarUsuario(DtoUsuario usuario){
+    public void modificarUsuario(DtoUsuario usuario){       
         usuarios.modificarUsuario(usuario);
     }
     
