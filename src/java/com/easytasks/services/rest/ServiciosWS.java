@@ -3,16 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.easytasks.services.rest;
 
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMUsuariosSB;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
+import com.easytasks.negocio.excepciones.NoExisteEntidadException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityExistsException;
@@ -40,7 +42,7 @@ public class ServiciosWS {
 
     @Context
     private UriInfo context;
-    
+
     @EJB
     ABMUsuariosSBLocal usuarios;
 
@@ -48,11 +50,13 @@ public class ServiciosWS {
      * Creates a new instance of ServiciosWS
      */
     public ServiciosWS() {
-       
+
     }
 
     /**
-     * Retrieves representation of an instance of com.easytasks.services.rest.ServiciosWS
+     * Retrieves representation of an instance of
+     * com.easytasks.services.rest.ServiciosWS
+     *
      * @return an instance of java.lang.String
      */
     @GET
@@ -64,6 +68,7 @@ public class ServiciosWS {
 
     /**
      * PUT method for updating or creating an instance of ServiciosWS
+     *
      * @param content representation for the resource
      * @return an HTTP response with content of the updated or created resource.
      */
@@ -71,60 +76,82 @@ public class ServiciosWS {
     @Consumes("application/xml")
     public void putXml(String content) {
     }
-    
+
     @GET
     @Path("/saludar")
-    public String saludar(){
+    public String saludar() {
         return "hola";
     }
-    
+
     @GET
     @Path("/ChequeoDeVida")
-    public String chequeo(){
+    public String chequeo() {
         return usuarios.chequeoDeVida();
     }
+
     @PUT
     @Path("/agregarUsuario")
     @Consumes("application/json")
-    public String agregarUsuario(DtoUsuario u){
-        try{ 
+    public String agregarUsuario(DtoUsuario u) {
+        try {
             usuarios.agregarUsuario(u);
             return "OK";
-        }catch(ExisteEntidadException e){
+        } catch (ExisteEntidadException e) {
             return "Ya existe un usuario con el Nombre de Usuario: " + u.getNombreUsuario() + ". Ingrese un nombre de usuario único";
-        }
-        catch(Exception ee){
+        } catch (Exception ee) {
             return "Ocurrió un error inesperado al ingresar el usuario " + u.getNombreUsuario();
         }
-        
+
     }
-    
+
     @POST
     @Path("/agregarContacto")
     @Consumes("application/json")
-    public void agregarContacto(@QueryParam("usuario")String usuario, @QueryParam("contacto")String contacto){
-        usuarios.agregarContacto(usuario, contacto);
+    public String agregarContacto(@QueryParam("usuario") String usuario, @QueryParam("contacto") String contacto) {
+        try {
+            usuarios.agregarContacto(usuario, contacto);
+            return "OK";
+        } catch (NoExisteEntidadException ex) {
+            return "No existe uno de los usuarios que desea agregar";
+        }
     }
-    
+
     @POST
     @Path("/modificarUsuario")
     @Consumes("application/json")
-    public void modificarUsuario(DtoUsuario usuario){       
-        usuarios.modificarUsuario(usuario);
+    public String modificarUsuario(DtoUsuario usuario) {
+        try {
+            usuarios.modificarUsuario(usuario);
+            return "OK";
+        } catch (NoExisteEntidadException ex) {
+            return "No existe el usuario a modificar. Recuerde que no puede cambiar el User Name";
+        } catch (Exception e) {
+            return "Ocurrió un error inesperado al ingresar el usuario " + usuario.getNombreUsuario();
+
+        }
     }
-    
+
     @DELETE
     @Path("/borrarUsuario")
     @Consumes("application/json")
-    public void borrarUsuario(@QueryParam("nombreUsuario")String nombreUsuario){        
-        usuarios.borrarUsuario(nombreUsuario);
-        
+    public String borrarUsuario(@QueryParam("nombreUsuario") String nombreUsuario) {
+        try {
+            usuarios.borrarUsuario(nombreUsuario);
+            return "OK";
+        } catch (NoExisteEntidadException ex) {
+            return "No existe el usuario que desea borrar.";
+        }
+
     }
-        
+
     @GET
     @Path("/obtenerUsuario")
     @Consumes("application/json")
-    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario")String nombreUsuario){
-        return usuarios.buscarUsuario(nombreUsuario);
+    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario") String nombreUsuario) {
+        try {
+            return usuarios.buscarUsuario(nombreUsuario);
+        } catch (NoExisteEntidadException ex) {
+            return null;
+        }
     }
 }
