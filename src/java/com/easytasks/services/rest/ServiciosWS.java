@@ -92,9 +92,9 @@ public class ServiciosWS {
             return usuarios.login(u.getNombreUsuario(), u.getContraseña());
         } catch (ExisteEntidadException e) {
             return "Ya existe un usuario con el Nombre de Usuario: " + u.getNombreUsuario() + ". Ingrese un nombre de usuario único";
-        } catch (NoExisteEntidadException n){
+        } catch (NoExisteEntidadException n) {
             return "Hubo un problema al intentar ingresar su usuario al sistema. Sin embargo, su usuario quedó registrado. Por favor intente ingresar normalmente";
-        }catch (Exception ee) {
+        } catch (Exception ee) {
             return "Ocurrió un error inesperado al ingresar el usuario " + u.getNombreUsuario();
         }
 
@@ -104,11 +104,18 @@ public class ServiciosWS {
     @Path("/agregarContacto")
     @Consumes("application/json")
     public String agregarContacto(@QueryParam("usuario") String usuario, @QueryParam("contacto") String contacto, @QueryParam("token") String token) {
-        try {
-            usuarios.agregarContacto(usuario, contacto);
-            return "OK";
-        } catch (NoExisteEntidadException ex) {
-            return "No existe uno de los usuarios que desea agregar";
+        if (usuarios.estaLogueado(token, usuario)) {
+            try {
+                usuarios.agregarContacto(usuario, contacto);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return "No existe uno de los usuarios que desea agregar";
+            }
+            catch(ExisteEntidadException e) {
+                return e.getMessage();
+            }
+        } else {
+            return "debe estar logueado para realizar esta acción";
         }
     }
 
@@ -116,14 +123,18 @@ public class ServiciosWS {
     @Path("/modificarUsuario")
     @Consumes("application/json")
     public String modificarUsuario(DtoUsuario usuario, @QueryParam("token") String token) {
-        try {
-            usuarios.modificarUsuario(usuario);
-            return "OK";
-        } catch (NoExisteEntidadException ex) {
-            return ex.getMessage();
-        } catch (Exception e) {
-            return "Ocurrió un error inesperado al modificar el usuario " + usuario.getNombreUsuario();
+        if (usuarios.estaLogueado(token, usuario.getNombreUsuario())) {
+            try {
+                usuarios.modificarUsuario(usuario);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return ex.getMessage();
+            } catch (Exception e) {
+                return "Ocurrió un error inesperado al modificar el usuario " + usuario.getNombreUsuario();
 
+            }
+        } else {
+            return "Debe estar logueado para realizar esta acción";
         }
     }
 
@@ -131,27 +142,26 @@ public class ServiciosWS {
     @Path("/borrarUsuario")
     @Consumes("application/json")
     public String borrarUsuario(@QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
-        
-        try {
-            usuarios.borrarUsuario(nombreUsuario);
-            return "OK";
-        } catch (NoExisteEntidadException ex) {
-            return "No existe el usuario que desea borrar.";
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                usuarios.borrarUsuario(nombreUsuario);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return "No existe el usuario que desea borrar.";
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
         }
-
     }
 
     @GET
     @Path("/obtenerUsuario")
     @Consumes("application/json")
-    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
-        if (usuarios.estaLogueado(token)) {
-            try {
-                return usuarios.buscarUsuario(nombreUsuario);
-            } catch (NoExisteEntidadException ex) {
-                return null;
-            }
-        } else {
+    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario") String nombreUsuario) {
+
+        try {
+            return usuarios.buscarUsuario(nombreUsuario);
+        } catch (NoExisteEntidadException ex) {
             return null;
         }
     }
