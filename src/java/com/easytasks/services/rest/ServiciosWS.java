@@ -223,5 +223,23 @@ public class ServiciosWS {
             return "Debe estar logueado para realizar esta acción";
         }
     }
+    
+    @DELETE
+    @Path("/borrarProyecto")
+    @Consumes("application/json")
+    public String borrarProyecto(@QueryParam("nombreProyecto") String nombreProyecto,@QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, nombreResponsable)) {
+            try {
+                
+                realizables.borrarProyecto(nombreProyecto, nombreResponsable);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return "No existe el usuario que desea borrar.";
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
+
     // </editor-fold>
 }
