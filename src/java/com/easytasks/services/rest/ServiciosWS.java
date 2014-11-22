@@ -6,22 +6,13 @@
 package com.easytasks.services.rest;
 
 import com.easytasks.dataTransferObjects.*;
-import com.easytasks.negocio.ABMUsuariosSB;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityExistsException;
-import javax.persistence.PersistenceException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Produces;
@@ -124,9 +115,9 @@ public class ServiciosWS {
             usuarios.modificarUsuario(usuario);
             return "OK";
         } catch (NoExisteEntidadException ex) {
-            return "No existe el usuario a modificar. Recuerde que no puede cambiar el User Name";
+            return ex.getMessage();
         } catch (Exception e) {
-            return "Ocurrió un error inesperado al ingresar el usuario " + usuario.getNombreUsuario();
+            return "Ocurrió un error inesperado al modificar el usuario " + usuario.getNombreUsuario();
 
         }
     }
