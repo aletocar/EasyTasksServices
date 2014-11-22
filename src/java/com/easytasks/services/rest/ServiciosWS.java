@@ -6,13 +6,10 @@
 package com.easytasks.services.rest;
 
 import com.easytasks.dataTransferObjects.*;
-import com.easytasks.negocio.ABMRealizablesSB;
 import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
@@ -189,7 +186,7 @@ public class ServiciosWS {
     }
 
     // </editor-fold>
-     // <editor-fold defaultstate="collapsed" desc=" Proyecto ">
+    // <editor-fold defaultstate="collapsed" desc=" Proyecto ">
     @PUT
     @Path("/agregarProyecto")
     @Consumes("application/json")
@@ -208,5 +205,23 @@ public class ServiciosWS {
         }
     }
 
+    @POST
+    @Path("/modificarProyecto")
+    @Consumes("application/json")
+    public String modificarProyecto(DtoProyecto proyecto, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, proyecto.getResponsable().getNombreUsuario())) {
+            try {
+                realizables.modificarProyecto(proyecto);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return ex.getMessage();
+            } catch (Exception e) {
+                return "Ocurrió un error inesperado al modificar el proyecto " + proyecto.getNombre();
+
+            }
+        } else {
+            return "Debe estar logueado para realizar esta acción";
+        }
+    }
     // </editor-fold>
 }
