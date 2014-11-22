@@ -6,6 +6,8 @@
 package com.easytasks.services.rest;
 
 import com.easytasks.dataTransferObjects.*;
+import com.easytasks.negocio.ABMRealizablesSB;
+import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
@@ -40,6 +42,9 @@ public class ServiciosWS {
     @EJB
     ABMUsuariosSBLocal usuarios;
 
+    @EJB
+    ABMRealizablesSBLocal realizables;
+
     /**
      * Creates a new instance of ServiciosWS
      */
@@ -71,18 +76,7 @@ public class ServiciosWS {
     public void putXml(String content) {
     }
 
-    @GET
-    @Path("/saludar")
-    public String saludar() {
-        return "hola";
-    }
-
-    @GET
-    @Path("/ChequeoDeVida")
-    public String chequeo() {
-        return usuarios.chequeoDeVida();
-    }
-
+    // <editor-fold defaultstate="collapsed" desc=" Usuario ">
     @PUT
     @Path("/agregarUsuario")
     @Consumes("application/json")
@@ -110,8 +104,7 @@ public class ServiciosWS {
                 return "OK";
             } catch (NoExisteEntidadException ex) {
                 return "No existe uno de los usuarios que desea agregar";
-            }
-            catch(ExisteEntidadException e) {
+            } catch (ExisteEntidadException e) {
                 return e.getMessage();
             }
         } else {
@@ -166,6 +159,8 @@ public class ServiciosWS {
         }
     }
 
+    // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc=" Login ">
     @PUT
     @Path("/{user}/login")
     @Consumes("application/json")
@@ -193,4 +188,25 @@ public class ServiciosWS {
         }
     }
 
+    // </editor-fold>
+     // <editor-fold defaultstate="collapsed" desc=" Proyecto ">
+    @PUT
+    @Path("/agregarProyecto")
+    @Consumes("application/json")
+    public String agregarProyecto(DtoProyecto p, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, p.getResponsable().getNombreUsuario())) {
+            try {
+                realizables.agregarProyecto(p);
+                return "OK";
+            } catch (ExisteEntidadException e) {
+                return "Ya existe un proyecto con el Nombre: " + p.getNombre() + ". Ingrese un nombre de proyecto único";
+            } catch (Exception ee) {
+                return "Ocurrió un error inesperado al agregar el proyecto " + p.getNombre();
+            }
+        } else {
+            return "Debe estar logueado para realizar esta acción";
+        }
+    }
+
+    // </editor-fold>
 }
