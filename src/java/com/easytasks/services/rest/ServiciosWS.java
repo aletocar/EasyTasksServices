@@ -9,6 +9,8 @@ import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
@@ -20,6 +22,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PUT;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
@@ -86,10 +89,12 @@ public class ServiciosWS {
     public String agregarUsuario(DtoUsuario u) {
         try {
             usuarios.agregarUsuario(u);
-            return "OK";
+            return usuarios.login(u.getNombreUsuario(), u.getContraseña());
         } catch (ExisteEntidadException e) {
             return "Ya existe un usuario con el Nombre de Usuario: " + u.getNombreUsuario() + ". Ingrese un nombre de usuario único";
-        } catch (Exception ee) {
+        } catch (NoExisteEntidadException n){
+            return "Hubo un problema al intentar ingresar su usuario al sistema. Sin embargo, su usuario quedó registrado. Por favor intente ingresar normalmente";
+        }catch (Exception ee) {
             return "Ocurrió un error inesperado al ingresar el usuario " + u.getNombreUsuario();
         }
 
@@ -98,7 +103,7 @@ public class ServiciosWS {
     @POST
     @Path("/agregarContacto")
     @Consumes("application/json")
-    public String agregarContacto(@QueryParam("usuario") String usuario, @QueryParam("contacto") String contacto) {
+    public String agregarContacto(@QueryParam("usuario") String usuario, @QueryParam("contacto") String contacto, @QueryParam("token") String token) {
         try {
             usuarios.agregarContacto(usuario, contacto);
             return "OK";
@@ -110,7 +115,7 @@ public class ServiciosWS {
     @POST
     @Path("/modificarUsuario")
     @Consumes("application/json")
-    public String modificarUsuario(DtoUsuario usuario) {
+    public String modificarUsuario(DtoUsuario usuario, @QueryParam("token") String token) {
         try {
             usuarios.modificarUsuario(usuario);
             return "OK";
@@ -125,7 +130,8 @@ public class ServiciosWS {
     @DELETE
     @Path("/borrarUsuario")
     @Consumes("application/json")
-    public String borrarUsuario(@QueryParam("nombreUsuario") String nombreUsuario) {
+    public String borrarUsuario(@QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        
         try {
             usuarios.borrarUsuario(nombreUsuario);
             return "OK";
@@ -138,11 +144,43 @@ public class ServiciosWS {
     @GET
     @Path("/obtenerUsuario")
     @Consumes("application/json")
-    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario") String nombreUsuario) {
-        try {
-            return usuarios.buscarUsuario(nombreUsuario);
-        } catch (NoExisteEntidadException ex) {
+    public DtoUsuario obtenerUsuario(@QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token)) {
+            try {
+                return usuarios.buscarUsuario(nombreUsuario);
+            } catch (NoExisteEntidadException ex) {
+                return null;
+            }
+        } else {
             return null;
         }
     }
+
+    @PUT
+    @Path("/{user}/login")
+    @Consumes("application/json")
+    public String login(@QueryParam("password") String password, @PathParam("user") String user) {
+        try {
+            String t = usuarios.login(user, password);
+            if (t.equals("")) {
+                t = "La combinación de usuario y contraseña no es correcta. Por favor intente nuevamente";
+            }
+            return t;
+        } catch (ExisteEntidadException | NoExisteEntidadException e) {
+            return e.getMessage();
+        }
+    }
+
+    @DELETE
+    @Path("/{token}/logout")
+    @Consumes("application/json")
+    public String logout(@PathParam("token") String t) {
+        try {
+            usuarios.logout(t);
+            return "OK";
+        } catch (NoExisteEntidadException ex) {
+            return ex.getMessage();
+        }
+    }
+
 }
