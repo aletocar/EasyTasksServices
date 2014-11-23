@@ -8,6 +8,8 @@ package com.easytasks.services.rest;
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
+import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteException;
+import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
 import javax.ejb.EJB;
@@ -197,6 +199,8 @@ public class ServiciosWS {
                 return "OK";
             } catch (ExisteEntidadException e) {
                 return "Ya existe un proyecto con el Nombre: " + p.getNombre() + ". Ingrese un nombre de proyecto único";
+            } catch (EntidadNoCreadaCorrectamenteException en) {
+                return en.getMessage();
             } catch (Exception ee) {
                 return "Ocurrió un error inesperado al agregar el proyecto " + p.getNombre();
             }
@@ -205,6 +209,12 @@ public class ServiciosWS {
         }
     }
 
+    /**
+     *
+     * @param proyecto
+     * @param token
+     * @return
+     */
     @POST
     @Path("/modificarProyecto")
     @Consumes("application/json")
@@ -213,24 +223,23 @@ public class ServiciosWS {
             try {
                 realizables.modificarProyecto(proyecto);
                 return "OK";
-            } catch (NoExisteEntidadException ex) {
+            } catch (NoExisteEntidadException | EntidadModificadaIncorrectamenteException ex) {
                 return ex.getMessage();
             } catch (Exception e) {
                 return "Ocurrió un error inesperado al modificar el proyecto " + proyecto.getNombre();
-
             }
         } else {
             return "Debe estar logueado para realizar esta acción";
         }
     }
-    
+
     @DELETE
     @Path("/borrarProyecto")
     @Consumes("application/json")
-    public String borrarProyecto(@QueryParam("nombreProyecto") String nombreProyecto,@QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("token") String token) {
+    public String borrarProyecto(@QueryParam("nombreProyecto") String nombreProyecto, @QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("token") String token) {
         if (usuarios.estaLogueado(token, nombreResponsable)) {
             try {
-                
+
                 realizables.borrarProyecto(nombreProyecto, nombreResponsable);
                 return "OK";
             } catch (NoExisteEntidadException ex) {
@@ -241,5 +250,39 @@ public class ServiciosWS {
         }
     }
 
+    @POST
+    @Path("/asignarUsuarioAProyecto")
+    public String asignarUsuarioAProyecto(@QueryParam("nombreProyecto") String nombreProyecto, @QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, nombreResponsable)) {
+            try {
+                realizables.asignarUsuarioAProyecto(nombreProyecto, nombreResponsable, nombreUsuario);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return ex.getMessage();
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
     // </editor-fold>
+    // <editor-fold defaultstate="collapsed" desc=" Tarea ">
+    @PUT
+    @Path("/agregarTarea")
+    @Consumes("application/json")
+    public String agregarTarea(DtoTarea t, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, t.getProyecto().getResponsable().getNombreUsuario())) {
+            try {
+                realizables.agregarTarea(t);
+                return "OK";
+            } catch (ExisteEntidadException | EntidadNoCreadaCorrectamenteException e) {
+                return e.getMessage();
+            } catch (Exception ee) {
+                return "Ocurrió un error inesperado al agregar la tarea " + t.getNombre();
+            }
+        } else {
+            return "Debe estar logueado para realizar esta acción";
+        }
+    }
+
+        // </editor-fold>
 }
