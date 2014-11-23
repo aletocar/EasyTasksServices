@@ -8,10 +8,13 @@ package com.easytasks.services.rest;
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
+import com.easytasks.negocio.excepciones.EntidadEliminadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
@@ -83,6 +86,8 @@ public class ServiciosWS {
         try {
             usuarios.agregarUsuario(u);
             return usuarios.login(u.getNombreUsuario(), u.getContraseña());
+        } catch (EntidadNoCreadaCorrectamenteException e) {
+            return e.getMessage();
         } catch (ExisteEntidadException e) {
             return "Ya existe un usuario con el Nombre de Usuario: " + u.getNombreUsuario() + ". Ingrese un nombre de usuario único";
         } catch (NoExisteEntidadException n) {
@@ -103,9 +108,11 @@ public class ServiciosWS {
                 return "OK";
             } catch (NoExisteEntidadException ex) {
                 return "No existe uno de los usuarios que desea agregar";
-            } catch (ExisteEntidadException e) {
+            } catch (ExisteEntidadException | EntidadModificadaIncorrectamenteException e) {
                 return e.getMessage();
-            }
+            }catch (Exception ee) {
+            return "Ocurrió un error inesperado al ingresar el contacto";
+        }
         } else {
             return "debe estar logueado para realizar esta acción";
         }
@@ -119,11 +126,10 @@ public class ServiciosWS {
             try {
                 usuarios.modificarUsuario(usuario);
                 return "OK";
-            } catch (NoExisteEntidadException ex) {
+            } catch (NoExisteEntidadException | EntidadModificadaIncorrectamenteException ex) {
                 return ex.getMessage();
             } catch (Exception e) {
                 return "Ocurrió un error inesperado al modificar el usuario " + usuario.getNombreUsuario();
-
             }
         } else {
             return "Debe estar logueado para realizar esta acción";
@@ -264,6 +270,7 @@ public class ServiciosWS {
             return "Debe loguearse para realizar esta acción";
         }
     }
+
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc=" Tarea ">
     @PUT
@@ -281,6 +288,42 @@ public class ServiciosWS {
             }
         } else {
             return "Debe estar logueado para realizar esta acción";
+        }
+    }
+
+    @POST
+    @Path("/modificarTarea")
+    @Consumes("application/json")
+    public String modificarTarea(DtoTarea tarea, @QueryParam("token") String token, @QueryParam("nombreUsuario") String nombreUsuario) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                realizables.modificarTarea(tarea, nombreUsuario);
+                return "OK";
+            } catch (NoExisteEntidadException | EntidadModificadaIncorrectamenteException ex) {
+                return ex.getMessage();
+            } catch (Exception e) {
+                return "Ocurrió un error inesperado al modificar la tarea " + tarea.getNombre();
+            }
+        } else {
+            return "Debe estar logueado para realizar esta acción";
+        }
+    }
+
+    @DELETE
+    @Path("/borrarTarea")
+    @Consumes("application/json")
+    public String borrarTarea(@QueryParam("nombreTarea") String nombreTarea, @QueryParam("nombreProyecto") String nombreProyecto, @QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("token") String token, @QueryParam("nombreUsuario") String nombreUsuario) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                realizables.borrarTarea(nombreTarea, nombreProyecto, nombreResponsable, nombreUsuario);
+                return "OK";
+            } catch (NoExisteEntidadException ex) {
+                return "No existe el usuario que desea borrar.";
+            } catch (EntidadEliminadaIncorrectamenteException ex) {
+                return ex.getMessage();
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
         }
     }
 
