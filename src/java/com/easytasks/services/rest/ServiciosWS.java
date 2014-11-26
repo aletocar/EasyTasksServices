@@ -8,13 +8,13 @@ package com.easytasks.services.rest;
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
+import com.easytasks.negocio.ManejadorTareasSB;
+import com.easytasks.negocio.ManejadorTareasSBLocal;
 import com.easytasks.negocio.excepciones.EntidadEliminadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
@@ -46,6 +46,9 @@ public class ServiciosWS {
 
     @EJB
     ABMRealizablesSBLocal realizables;
+
+    @EJB
+    ManejadorTareasSBLocal tareas;
 
     /**
      * Creates a new instance of ServiciosWS
@@ -110,9 +113,9 @@ public class ServiciosWS {
                 return "No existe uno de los usuarios que desea agregar";
             } catch (ExisteEntidadException | EntidadModificadaIncorrectamenteException e) {
                 return e.getMessage();
-            }catch (Exception ee) {
-            return "Ocurrió un error inesperado al ingresar el contacto";
-        }
+            } catch (Exception ee) {
+                return "Ocurrió un error inesperado al ingresar el contacto";
+            }
         } else {
             return "debe estar logueado para realizar esta acción";
         }
@@ -321,6 +324,28 @@ public class ServiciosWS {
                 return "No existe el usuario que desea borrar.";
             } catch (EntidadEliminadaIncorrectamenteException ex) {
                 return ex.getMessage();
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
+
+    @POST
+    @Path("/completarTarea")
+    public String completarTarea(@QueryParam("nombreTarea") String nombreTarea,
+            @QueryParam("nombreProyecto") String nombreProyecto,
+            @QueryParam("nombreResponsable") String nombreResponsable,
+            @QueryParam("token") String token,
+            @QueryParam("nombreUsuario") String nombreUsuario) {
+
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                tareas.completarTarea(nombreTarea, nombreProyecto, nombreResponsable, nombreUsuario);
+                return "OK";
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "Error Inesperado";
             }
         } else {
             return "Debe loguearse para realizar esta acción";
