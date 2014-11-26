@@ -15,6 +15,7 @@ import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteExcepti
 import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
@@ -352,5 +353,111 @@ public class ServiciosWS {
         }
     }
 
+    @POST
+    @Path("/agregarResponsableATarea")
+    public String agregarResponsableATarea(
+            @QueryParam("nombreTarea") String nombreTarea,
+            @QueryParam("nombreProyecto") String nombreProyecto,
+            @QueryParam("nombreResponsable") String nombreResponsable,
+            @QueryParam("token") String token,
+            @QueryParam("nombreUsuario") String nombreUsuario,
+            @QueryParam("nombreUsuarioAAgregar") String nombreUsuarioAAgregar
+    ) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                tareas.agregarResponsable(nombreTarea, nombreProyecto, nombreResponsable, nombreUsuario, nombreUsuarioAAgregar);
+                return "OK";
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException  e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "Error Inesperado";
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
+
+    @POST
+    @Path("/agregarSubTarea")
+    public String agregarSubtarea(
+            @QueryParam("nombreTareaPadre") String nombreTareaPadre,
+            @QueryParam("nombreProyecto") String nombreProyecto,
+            @QueryParam("nombreResponsable") String nombreResponsable,
+            @QueryParam("token") String token,
+            @QueryParam("nombreTareaHija") String nombreTareaHija
+    ) {
+        if (usuarios.estaLogueado(token, nombreResponsable)) {
+            try {
+                tareas.agregarSubTarea(nombreTareaPadre, nombreTareaHija, nombreProyecto, nombreResponsable);
+                return "OK";
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException  e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "Error Inesperado";
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
+
+    @POST
+    @Path("/delegarTarea")
+    public String delegarTarea(
+            @QueryParam("nombreTarea") String nombreTarea,
+            @QueryParam("nombreProyecto") String nombreProyecto,
+            @QueryParam("nombreResponsable") String nombreResponsable,
+            @QueryParam("nombreUsuarioActual") String nombreUsuarioActual,
+            @QueryParam("nombreUsuarioDelegado") String nombreUsuarioDelegado,
+            @QueryParam("token") String token
+    ) {
+        if (usuarios.estaLogueado(token, nombreUsuarioActual)) {
+            try {
+                tareas.delegarTarea(nombreTarea, nombreProyecto, nombreResponsable, nombreUsuarioActual, nombreUsuarioDelegado);
+                return "OK";
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "Error Inesperado";
+            }
+        } else {
+            return "Debe loguearse para realizar esta acción";
+        }
+    }
+    
+    @GET
+    @Path("/consultaTareasRealizadas")
+    @Produces("application/json")
+    public List<DtoTarea> consultaTareasRealizadas(
+            @QueryParam("nombreUsuario") String nombreUsuario,
+            @QueryParam("token") String token
+    ){
+        if(usuarios.estaLogueado(token, nombreUsuario)){
+            try{
+                return tareas.consultarTareasRealizadas(nombreUsuario);
+            }catch(NoExisteEntidadException e){
+                return null;
+            }
+        }else{
+            return null;
+        }
+    }
+    
+    @GET
+    @Path("/consultaTareasRealizadasResponsable")
+    @Produces("application/json")
+    public List<DtoTarea> consultaTareasRealizadasResponsable(
+            @QueryParam("nombreUsuario") String nombreUsuario,
+            @QueryParam("token") String token
+    ){
+        if(usuarios.estaLogueado(token, nombreUsuario)){
+            try{
+                return tareas.consultarTareasRealizadasResponsable(nombreUsuario);
+            }catch(NoExisteEntidadException e){
+                return null;
+            }
+        }else{
+            return null;
+        }
+    }
         // </editor-fold>
 }
