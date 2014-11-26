@@ -17,6 +17,7 @@ import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
 import java.util.List;
 import javax.ejb.EJB;
+import javax.ejb.EJBException;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -367,7 +368,7 @@ public class ServiciosWS {
             try {
                 tareas.agregarResponsable(nombreTarea, nombreProyecto, nombreResponsable, nombreUsuario, nombreUsuarioAAgregar);
                 return "OK";
-            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException  e) {
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException e) {
                 return e.getMessage();
             } catch (Exception e) {
                 return "Error Inesperado";
@@ -390,7 +391,7 @@ public class ServiciosWS {
             try {
                 tareas.agregarSubTarea(nombreTareaPadre, nombreTareaHija, nombreProyecto, nombreResponsable);
                 return "OK";
-            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException  e) {
+            } catch (EntidadModificadaIncorrectamenteException | NoExisteEntidadException e) {
                 return e.getMessage();
             } catch (Exception e) {
                 return "Error Inesperado";
@@ -423,41 +424,104 @@ public class ServiciosWS {
             return "Debe loguearse para realizar esta acción";
         }
     }
-    
+
     @GET
     @Path("/consultaTareasRealizadas")
     @Produces("application/json")
     public List<DtoTarea> consultaTareasRealizadas(
             @QueryParam("nombreUsuario") String nombreUsuario,
             @QueryParam("token") String token
-    ){
-        if(usuarios.estaLogueado(token, nombreUsuario)){
-            try{
+    ) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
                 return tareas.consultarTareasRealizadas(nombreUsuario);
-            }catch(NoExisteEntidadException e){
+            } catch (NoExisteEntidadException e) {
                 return null;
             }
-        }else{
+        } else {
             return null;
         }
     }
-    
+
     @GET
     @Path("/consultaTareasRealizadasResponsable")
     @Produces("application/json")
     public List<DtoTarea> consultaTareasRealizadasResponsable(
             @QueryParam("nombreUsuario") String nombreUsuario,
             @QueryParam("token") String token
-    ){
-        if(usuarios.estaLogueado(token, nombreUsuario)){
-            try{
+    ) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
                 return tareas.consultarTareasRealizadasResponsable(nombreUsuario);
-            }catch(NoExisteEntidadException e){
+            } catch (NoExisteEntidadException e) {
                 return null;
             }
-        }else{
+        } else {
             return null;
         }
     }
-        // </editor-fold>
+    // </editor-fold>
+
+    @GET
+    @Path("/conectarSocial")
+    public String conectarSocial(@QueryParam("redSocial") String redSocial, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                return usuarios.conectar(nombreUsuario, redSocial);
+            } catch (Exception e) {
+                return e.getMessage();
+            }
+        } else {
+            return "debe estar logueado para realizar esta accion";
+        }
+    }
+
+    @POST
+    @Path("/ingresarPin")
+    public String ingresarPin(@QueryParam("pin") String pin, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                usuarios.ingresarPin(nombreUsuario, pin);
+                return "OK";
+            } catch (Exception e) {
+                return "Error";
+            }
+        } else {
+            return "debe estar logueado para realizar esta accion";
+        }
+    }
+
+    @POST
+    @Path("/postear")
+    public String postear(@QueryParam("post") String post, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token, @QueryParam("redSocial") String redSocial) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                usuarios.postear(nombreUsuario, post, redSocial);
+                return "OK";
+            } catch (EJBException e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "error al postear";
+            }
+        } else {
+            return "debe estar logueado para realizar esta accion";
+        }   
+    }
+    
+    @POST
+    @Path("/desconectarSocial")
+    public String desconectarSocial(@QueryParam("redSocial") String redSocial, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
+        if (usuarios.estaLogueado(token, nombreUsuario)) {
+            try {
+                usuarios.desconectar(nombreUsuario, redSocial);
+                return "OK";
+            } catch (EJBException e) {
+                return e.getMessage();
+            } catch (Exception e) {
+                return "error al desconectar";
+            }
+        } else {
+            return "debe estar logueado para realizar esta accion";
+        }   
+    }
 }
