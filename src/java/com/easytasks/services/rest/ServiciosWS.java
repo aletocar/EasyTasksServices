@@ -6,9 +6,9 @@
 package com.easytasks.services.rest;
 
 import com.easytasks.dataTransferObjects.*;
-import com.easytasks.negocio.ABMRealizablesSBLocal;
-import com.easytasks.negocio.ABMUsuariosSBLocal;
-import com.easytasks.negocio.ManejadorTareasSBLocal;
+import com.easytasks.negocio.logica.ABMRealizablesSBLocal;
+import com.easytasks.negocio.logica.ABMUsuariosSBLocal;
+import com.easytasks.negocio.logica.ManejadorTareasSBLocal;
 import com.easytasks.negocio.excepciones.EntidadEliminadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
