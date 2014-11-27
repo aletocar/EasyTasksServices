@@ -8,13 +8,13 @@ package com.easytasks.services.rest;
 import com.easytasks.dataTransferObjects.*;
 import com.easytasks.negocio.ABMRealizablesSBLocal;
 import com.easytasks.negocio.ABMUsuariosSBLocal;
-import com.easytasks.negocio.ManejadorTareasSB;
 import com.easytasks.negocio.ManejadorTareasSBLocal;
 import com.easytasks.negocio.excepciones.EntidadEliminadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadModificadaIncorrectamenteException;
 import com.easytasks.negocio.excepciones.EntidadNoCreadaCorrectamenteException;
 import com.easytasks.negocio.excepciones.ExisteEntidadException;
 import com.easytasks.negocio.excepciones.NoExisteEntidadException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
@@ -165,16 +165,19 @@ public class ServiciosWS {
         try {
             return usuarios.buscarUsuario(nombreUsuario);
         } catch (NoExisteEntidadException ex) {
-            return null;
+            DtoUsuario ret = new DtoUsuario();
+            ret.setMessage(ex.getMessage());
+            ret.setTransferOk(false);
+            return ret;
         }
     }
 
     // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc=" Login ">
     @PUT
-    @Path("/{user}/login")
+    @Path("/login")
     @Consumes("application/json")
-    public String login(@QueryParam("password") String password, @PathParam("user") String user) {
+    public String login(@QueryParam("password") String password, @QueryParam("user") String user) {
         try {
             String t = usuarios.login(user, password);
             if (t.equals("")) {
@@ -316,7 +319,6 @@ public class ServiciosWS {
 
     @DELETE
     @Path("/borrarTarea")
-    @Consumes("application/json")
     public String borrarTarea(@QueryParam("nombreTarea") String nombreTarea, @QueryParam("nombreProyecto") String nombreProyecto, @QueryParam("nombreResponsable") String nombreResponsable, @QueryParam("token") String token, @QueryParam("nombreUsuario") String nombreUsuario) {
         if (usuarios.estaLogueado(token, nombreUsuario)) {
             try {
@@ -436,10 +438,20 @@ public class ServiciosWS {
             try {
                 return tareas.consultarTareasRealizadas(nombreUsuario);
             } catch (NoExisteEntidadException e) {
-                return null;
+                List<DtoTarea> ret = new ArrayList<>();
+                DtoTarea t = new DtoTarea();
+                t.setMessage(e.getMessage());
+                t.setTransferOk(false);
+                ret.add(t);
+                return ret;
             }
         } else {
-            return null;
+            List<DtoTarea> ret = new ArrayList<>();
+            DtoTarea t = new DtoTarea();
+            t.setMessage("El usuario consultante debe estar logueado para realizar la consulta");
+            t.setTransferOk(false);
+            ret.add(t);
+            return ret;
         }
     }
 
@@ -454,14 +466,24 @@ public class ServiciosWS {
             try {
                 return tareas.consultarTareasRealizadasResponsable(nombreUsuario);
             } catch (NoExisteEntidadException e) {
-                return null;
+                List<DtoTarea> ret = new ArrayList<>();
+                DtoTarea t = new DtoTarea();
+                t.setMessage(e.getMessage());
+                t.setTransferOk(false);
+                ret.add(t);
+                return ret;
             }
         } else {
-            return null;
+            List<DtoTarea> ret = new ArrayList<>();
+            DtoTarea t = new DtoTarea();
+            t.setMessage("El usuario consultante debe estar logueado para realizar la consulta");
+            t.setTransferOk(false);
+            ret.add(t);
+            return ret;
         }
     }
     // </editor-fold>
-
+    // <editor-fold defaultstate="collapsed" desc=" Social ">
     @GET
     @Path("/conectarSocial")
     public String conectarSocial(@QueryParam("redSocial") String redSocial, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
@@ -505,9 +527,9 @@ public class ServiciosWS {
             }
         } else {
             return "debe estar logueado para realizar esta accion";
-        }   
+        }
     }
-    
+
     @POST
     @Path("/desconectarSocial")
     public String desconectarSocial(@QueryParam("redSocial") String redSocial, @QueryParam("nombreUsuario") String nombreUsuario, @QueryParam("token") String token) {
@@ -522,6 +544,7 @@ public class ServiciosWS {
             }
         } else {
             return "debe estar logueado para realizar esta accion";
-        }   
+        }
     }
+    // </editor-fold>
 }
